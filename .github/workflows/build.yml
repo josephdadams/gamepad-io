@@ -26,15 +26,16 @@ jobs:
             - name: Install dependencies
               run: yarn install
 
-            - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
+            - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
               run: |
-                  if [ ${{ matrix.os }} = 'macos-latest' ]; then
-                    yarn electron-builder --macos --${{ matrix.arch }}
-                  elif [ ${{ matrix.os }} = 'ubuntu-latest' ]; then
-                    yarn electron-builder --linux --${{ matrix.arch }}
-                  elif [ ${{ matrix.os }} = 'windows-latest' ]; then
-                    yarn electron-builder --windows --${{ matrix.arch }}
-                  fi
+                if ($env:RUNNER_OS -eq 'MacOS') {
+                  yarn electron-builder --macos --${{ matrix.arch }}
+                } elseif ($env:RUNNER_OS -eq 'Linux') {
+                  yarn electron-builder --linux --${{ matrix.arch }}
+                } elseif ($env:RUNNER_OS -eq 'Windows') {
+                  yarn electron-builder --windows --${{ matrix.arch }}
+                }
+              shell: pwsh
               env:
                   CI: true
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
