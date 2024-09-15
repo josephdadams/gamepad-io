@@ -8,7 +8,7 @@ See the [API](./api.md) for use.
 
 ## Install
 
-*macOS 10.10+, Linux, and Windows 7+ are supported (64-bit only).*
+_macOS 10.10+, Linux, and Windows 7+ are supported (64-bit only)._
 
 **macOS**
 
@@ -18,7 +18,7 @@ See the [API](./api.md) for use.
 
 [**Download**](https://github.com/josephdadams/gamepad-io/releases/latest) the `.AppImage` or `.deb` file.
 
-*The AppImage needs to be [made executable](http://discourse.appimage.org/t/how-to-make-an-appimage-executable/80) after download.*
+_The AppImage needs to be [made executable](http://discourse.appimage.org/t/how-to-make-an-appimage-executable/80) after download._
 
 **Windows**
 

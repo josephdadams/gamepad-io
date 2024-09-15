@@ -1,136 +1,151 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>gamepad-io</title>
-		<link rel="stylesheet" href="index.css">
-		<script>
-			const ipc = require('electron').ipcRenderer;
-			//const remote = require('electron').remote;
-			const { shell } = require('electron');
-			const path = require('path');
-			const config = require('./config');
+    <head>
+        <meta charset="utf-8" />
+        <title>gamepad-io</title>
+        <link rel="stylesheet" href="index.css" />
+        <script>
+            const ipc = require('electron').ipcRenderer
+            //const remote = require('electron').remote;
+            const { shell } = require('electron')
+            const path = require('path')
+            const config = require('./config')
 
-			//IPCs
-			var nano = require('nanochoo')
-			var x = require('hyperaxe')
-			var app = nano()
+            //IPCs
+            var nano = require('nanochoo')
+            var x = require('hyperaxe')
+            var app = nano()
 
-			app.view(view)
-			app.use(store)
-			app.mount('#app')
+            app.view(view)
+            app.use(store)
+            app.mount('#app')
 
-			function loadIPCs() {
-				ipc.on('haptic', (event, controllerIndex, type, params) => {
-					const gamepads = navigator.getGamepads();
-					const myGamepad = gamepads[controllerIndex];
-					myGamepad.vibrationActuator.playEffect(type, params);
-				});
-			}
+            function loadIPCs() {
+                ipc.on('haptic', (event, controllerIndex, type, params) => {
+                    const gamepads = navigator.getGamepads()
+                    const myGamepad = gamepads[controllerIndex]
+                    myGamepad.vibrationActuator.playEffect(type, params)
+                })
+            }
 
-			function view (state, emit) {
-				var gamepads = Object.values(state.controllers)
-				var title = x('p.title')
+            function view(state, emit) {
+                var gamepads = Object.values(state.controllers)
+                var title = x('p.title')
 
-				return x('#app')(
-					gamepads.length < 1
-					? 'Press a button on your controller to get started. All connected gamepads will be detected.'
-					: gamepads.map((gamepad, idx) =>
-						x('.gamepad')(
-							title(`${idx + 1}: ${gamepad.id}`),
-							title('Buttons'),
-							x('.buttons')(
-								buttons(gamepad.index, gamepad.buttons)
-							),
-							title('Axes'),
-							x('.axes')(
-								axes(gamepad.index, gamepad.axes)
-							)
-						)
-					)
-				)
-			}
+                return x('#app')(
+                    gamepads.length < 1
+                        ? 'Press a button on your controller to get started. All connected gamepads will be detected.'
+                        : gamepads.map((gamepad, idx) =>
+                              x('.gamepad')(
+                                  title(`${idx + 1}: ${gamepad.id}`),
+                                  title('Buttons'),
+                                  x('.buttons')(
+                                      buttons(gamepad.index, gamepad.buttons)
+                                  ),
+                                  title('Axes'),
+                                  x('.axes')(axes(gamepad.index, gamepad.axes))
+                              )
+                          )
+                )
+            }
 
-			function buttons (index, arr) {
-				return arr.map((button, idx) => {
-					var pressed = button === 1.0
-					var touched = button === 1.0
-					var val = button
+            function buttons(index, arr) {
+                return arr.map((button, idx) => {
+                    var pressed = button === 1.0
+                    var touched = button === 1.0
+                    var val = button
 
-					if (typeof button === 'object') {
-						pressed = button.pressed
-						touched = button.touched
-						val = button.value
-					}
+                    if (typeof button === 'object') {
+                        pressed = button.pressed
+                        touched = button.touched
+                        val = button.value
+                    }
 
-					var pct = `${Math.round(val * 100)}%`
+                    var pct = `${Math.round(val * 100)}%`
 
-					let percent = Math.round(val * 100);
-					ipc.send('button_event', index, idx, pressed, touched, val, percent);
+                    let percent = Math.round(val * 100)
+                    ipc.send(
+                        'button_event',
+                        index,
+                        idx,
+                        pressed,
+                        touched,
+                        val,
+                        percent
+                    )
 
-					return x(`.button${pressed ? '.pressed' : ''}`)(
-						{ style: `background-size: ${pct} ${pct}` },
-						idx
-					)
-				})
-			}
+                    return x(`.button${pressed ? '.pressed' : ''}`)(
+                        { style: `background-size: ${pct} ${pct}` },
+                        idx
+                    )
+                })
+            }
 
-			function axes (index, arr) {
-				return arr.map((axis, idx) => {
-					var pressed = axis < -0.15 || axis > 0.15 ? '.pressed' : ''
-					var pressedBool = axis < -0.15 || axis > 0.15 ? true : false
+            function axes(index, arr) {
+                return arr.map((axis, idx) => {
+                    var pressed = axis < -0.15 || axis > 0.15 ? '.pressed' : ''
+                    var pressedBool = axis < -0.15 || axis > 0.15 ? true : false
 
-					ipc.send('axis_event', index, idx, pressedBool, axis);
+                    ipc.send('axis_event', index, idx, pressedBool, axis)
 
-					return x('.axis')(
-					x(`span.button${pressed}`)(idx),
-					x(`meter${pressed}`)(
-						{ min: -1, max: 1, value: axis },
-						`${idx}: ${axis.toFixed(4)}`
-					)
-					)
-				})
-			}
+                    return x('.axis')(
+                        x(`span.button${pressed}`)(idx),
+                        x(`meter${pressed}`)(
+                            { min: -1, max: 1, value: axis },
+                            `${idx}: ${axis.toFixed(4)}`
+                        )
+                    )
+                })
+            }
 
-			function store (state, emitter) {
-				state.controllers = {}
-				state.requestId = null
+            function store(state, emitter) {
+                state.controllers = {}
+                state.requestId = null
 
-				window.addEventListener('gamepadconnected', ({ gamepad }) => {
-					state.controllers[gamepad.index] = gamepad
-					emitter.emit('render')
-					ipc.send('gamepad_connected', gamepad.index, gamepad.id, gamepad.buttons.length, gamepad.axes.length);
-				})
+                window.addEventListener('gamepadconnected', ({ gamepad }) => {
+                    state.controllers[gamepad.index] = gamepad
+                    emitter.emit('render')
+                    ipc.send(
+                        'gamepad_connected',
+                        gamepad.index,
+                        gamepad.id,
+                        gamepad.buttons.length,
+                        gamepad.axes.length
+                    )
+                })
 
-				window.addEventListener('gamepaddisconnected', ({ gamepad }) => {
-					delete state.controllers[gamepad.index]
-					emitter.emit('render')
-					ipc.send('gamepad_disconnected', gamepad.index);
-				})
+                window.addEventListener(
+                    'gamepaddisconnected',
+                    ({ gamepad }) => {
+                        delete state.controllers[gamepad.index]
+                        emitter.emit('render')
+                        ipc.send('gamepad_disconnected', gamepad.index)
+                    }
+                )
 
-				function scanGamepads () {
-					var gamepads = navigator.getGamepads()
+                function scanGamepads() {
+                    var gamepads = navigator.getGamepads()
 
-					Array.from(gamepads).forEach(gamepad => {
-						if (gamepad) {
-							state.controllers[gamepad.index] = gamepad
-						}
-					})
+                    Array.from(gamepads).forEach((gamepad) => {
+                        if (gamepad) {
+                            state.controllers[gamepad.index] = gamepad
+                        }
+                    })
 
-					emitter.emit('render')
-					window.requestAnimationFrame(scanGamepads)
-				}
+                    emitter.emit('render')
+                    window.requestAnimationFrame(scanGamepads)
+                }
 
-				scanGamepads()
-				loadIPCs();
-			}
-		</script>
-	</head>
-	<body>
-		<div id="logo">
-			<img src="static/icon.png" />
-		</div>
-		<div id="app"></div>
-		<script src="index.js"></script>
-	</body>
+                scanGamepads()
+                loadIPCs()
+            }
+        </script>
+    </head>
+    <body>
+        <div id="logo">
+            <img src="static/icon.png" />
+        </div>
+        <div id="app"></div>
+        <script src="index.js"></script>
+    </body>
 </html>

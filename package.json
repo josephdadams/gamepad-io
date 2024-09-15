@@ -1,69 +1,82 @@
 {
-	"name": "gamepad-io",
-	"productName": "gamepad-io",
-	"version": "0.1.0",
-	"description": "Use gamepads to control your computer",
-	"license": "MIT",
-	"repository": "josephdadams/gamepad-io",
-	"author": {
-		"name": "Joseph Adams",
-		"email": "josephdadams@gmail.com",
-		"url": "https://josephadams.dev"
-	},
-	"scripts": {
-		"postinstall": "electron-builder install-app-deps",
-		"lint": "xo",
-		"test": "npm run lint",
-		"start": "electron .",
-		"pack": "electron-builder --dir",
-		"dist": "electron-builder --macos --linux --windows",
-		"release": "np"
-	},
-	"dependencies": {
-		"electron-store": "^8.0.0",
-		"express": "^4.19.2",
-		"hyperaxe": "^2.0.1",
-		"nanochoo": "^6.13.0",
-		"short-uuid": "^5.2.0",
-		"socket.io": "^4.7.5",
-		"style.css": "^1.0.3"
-	},
-	"devDependencies": {
-		"electron": "^31.3.1",
-		"electron-builder": "^24.13.3",
-		"np": "^7.5.0",
-		"xo": "^0.39.1"
-	},
-	"xo": {
-		"envs": [
-			"node",
-			"browser"
-		]
-	},
-	"np": {
-		"publish": false,
-		"releaseDraft": false
-	},
-	"build": {
-		"appId": "com.josephadams.gamepad-io",
-		"mac": {
-			"category": "public.app-category.productivity",
-			"darkModeSupport": true
-		},
-		"dmg": {
-			"iconSize": 160,
-			"contents": [
-				{
-					"x": 180,
-					"y": 170
-				},
-				{
-					"x": 480,
-					"y": 170,
-					"type": "link",
-					"path": "/Applications"
-				}
-			]
-		}
-	}
+    "name": "gamepad-io",
+    "productName": "gamepad-io",
+    "version": "0.1.0",
+    "description": "Use gamepads to control your computer",
+    "license": "MIT",
+    "repository": "josephdadams/gamepad-io",
+    "author": {
+        "name": "Joseph Adams",
+        "email": "josephdadams@gmail.com",
+        "url": "https://josephadams.dev"
+    },
+    "scripts": {
+        "postinstall": "electron-builder install-app-deps",
+        "format": "prettier -w .",
+        "lint": "xo",
+        "test": "npm run lint",
+        "start": "electron .",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder --macos --linux --windows --armv7l",
+        "release": "np"
+    },
+    "dependencies": {
+        "electron-store": "^8.0.0",
+        "express": "^4.19.2",
+        "hyperaxe": "^2.0.1",
+        "nanochoo": "^6.13.0",
+        "short-uuid": "^5.2.0",
+        "socket.io": "^4.7.5",
+        "style.css": "^1.0.3"
+    },
+    "devDependencies": {
+        "electron": "^31.3.1",
+        "electron-builder": "^24.13.3",
+        "np": "^7.5.0",
+        "prettier": "^3.3.3",
+        "xo": "^0.39.1"
+    },
+    "xo": {
+        "envs": [
+            "node",
+            "browser"
+        ]
+    },
+    "np": {
+        "publish": false,
+        "releaseDraft": false
+    },
+    "build": {
+        "appId": "com.josephadams.gamepad-io",
+        "mac": {
+            "category": "public.app-category.productivity",
+            "darkModeSupport": true
+        },
+        "dmg": {
+            "iconSize": 160,
+            "contents": [
+                {
+                    "x": 180,
+                    "y": 170
+                },
+                {
+                    "x": 480,
+                    "y": 170,
+                    "type": "link",
+                    "path": "/Applications"
+                }
+            ]
+        },
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb",
+                "rpm"
+            ],
+            "arch": [
+                "armv7l",
+                "arm64"
+            ]
+        }
+    }
 }
