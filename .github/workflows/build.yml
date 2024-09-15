@@ -45,4 +45,4 @@ jobs:
               with:
                   name: gamepad-io-${{ matrix.os }}-${{ matrix.arch }}
                   path: |
-                      dist/**/*${{ matrix.os }}-${{ matrix.arch }}.*
+                      dist/**/*
