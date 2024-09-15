@@ -41,7 +41,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', async () => {})
-
 ;(async () => {
     await app.whenReady()
 

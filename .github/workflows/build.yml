@@ -1,47 +1,47 @@
 name: Build
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
 
 jobs:
-  build:
-    name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        arch: [x64, arm64]
-    
-    steps:
-      - uses: actions/checkout@v3
+    build:
+        name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [windows-latest, macos-latest, ubuntu-latest]
+                arch: [x64, arm64]
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: yarn install
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '18'
 
-      - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
-        run: |
-          if [ ${{ matrix.os }} = 'macos-latest' ]; then
-            yarn electron-builder --macos --${{ matrix.arch }}
-          elif [ ${{ matrix.os }} = 'ubuntu-latest' ]; then
-            yarn electron-builder --linux --${{ matrix.arch }}
-          elif [ ${{ matrix.os }} = 'windows-latest' ]; then
-            yarn electron-builder --windows --${{ matrix.arch }}
-          fi
-        env:
-          CI: true
-		  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+            - name: Install dependencies
+              run: yarn install
 
-      - name: Upload Artifacts for ${{ matrix.os }} ${{ matrix.arch }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: gamepad-io-${{ matrix.os }}-${{ matrix.arch }}
-          path: |
-            dist/**/*${{ matrix.os }}-${{ matrix.arch }}.*
+            - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
+              run: |
+                  if [ ${{ matrix.os }} = 'macos-latest' ]; then
+                    yarn electron-builder --macos --${{ matrix.arch }}
+                  elif [ ${{ matrix.os }} = 'ubuntu-latest' ]; then
+                    yarn electron-builder --linux --${{ matrix.arch }}
+                  elif [ ${{ matrix.os }} = 'windows-latest' ]; then
+                    yarn electron-builder --windows --${{ matrix.arch }}
+                  fi
+              env:
+                  CI: true
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+            - name: Upload Artifacts for ${{ matrix.os }} ${{ matrix.arch }}
+              uses: actions/upload-artifact@v3
+              with:
+                  name: gamepad-io-${{ matrix.os }}-${{ matrix.arch }}
+                  path: |
+                      dist/**/*${{ matrix.os }}-${{ matrix.arch }}.*
