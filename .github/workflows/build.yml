@@ -1,4 +1,4 @@
-name: Build
+name: Build and Release
 
 on:
   push:
@@ -43,6 +43,29 @@ jobs:
         env:
           CI: true
 
+      - name: Upload Artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}-${{ matrix.arch }}
+          path: |
+            dist/gamepad-io-${{ matrix.arch }}.dmg
+            dist/gamepad-io Setup v${{ env.VERSION }}.exe
+            dist/gamepad-io-${{ matrix.arch }}.AppImage
+            dist/gamepad-io-${{ matrix.arch }}.deb
+            dist/gamepad-io-${{ matrix.arch }}.snap
+
+  release:
+    name: Create Release and Upload Assets
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract version from package.json
+        id: extract_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -51,20 +74,23 @@ jobs:
           release_name: Release v${{ env.VERSION }}
           draft: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Remove existing assets from release
         id: remove_assets
         run: |
           release_id=$(gh release view v${{ env.VERSION }} --json id -q ".id")
           if [ -n "$release_id" ]; then
-            gh release delete-assets "$release_id" --confirm
+            assets=$(gh release view v${{ env.VERSION }} --json assets -q ".assets[] | .id")
+            for asset in $assets; do
+              echo "Deleting asset $asset..."
+              gh release delete-asset $asset
+            done
           fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload macOS Asset
-        if: matrix.os == 'macos-latest'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -73,7 +99,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Windows Asset
-        if: matrix.os == 'windows-latest'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -82,7 +107,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Linux Assets
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -91,7 +115,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Debian Package
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -100,7 +123,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Snap Package
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
