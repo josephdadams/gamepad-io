@@ -1,46 +1,46 @@
 name: Build
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-    build_desktop:
-        name: Build Desktop on ${{ matrix.os }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [windows-latest, macos-latest]
-        steps:
-            - uses: actions/checkout@v1
-            - name: Setup Node.js
-              uses: actions/setup-node@v1
-              with:
-                  node-version: 18
-            - name: Install dependencies
-              run: npm i
-            - name: Build
-              uses: samuelmeuli/action-electron-builder@v1.6.0
-              with:
-                  github_token: ${{ secrets.github_token }}
-                  release: true
-                  skip_build: true
-##    - name: Get current version
-##      uses: Saionaro/extract-package-version@v1.0.6
-##      id: package-version
-##    - name: Upload Artifact
-##      uses: actions/upload-artifact@v2
-##      if: matrix.os == 'ubuntu-latest'
-##      with:
-##        name: 'gamepad-io-${{ steps.package-version.outputs.version }}-Linux'
-##        path: 'release/gamepad-io-${{ steps.package-version.outputs.version }}.AppImage'
-##    - name: Upload Artifact
-##      uses: actions/upload-artifact@v2
-##      if: matrix.os == 'macos-latest'
-##      with:
-##        name: 'gamepad-io-${{ steps.package-version.outputs.version }}-MacOS'
-##        path: 'release/gamepad-io-${{ steps.package-version.outputs.version }}.dmg'
-##    - name: Upload Artifact
-##      uses: actions/upload-artifact@v2
-##      if: matrix.os == 'windows-latest'
-##      with:
-##        name: 'gamepad-io-${{ steps.package-version.outputs.version }}-Windows'
-##        path: 'release/gamepad-io Setup ${{ steps.package-version.outputs.version }}.exe'
+  build:
+    name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        arch: [x64, arm64]
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
+        run: |
+          if [ ${{ matrix.os }} = 'macos-latest' ]; then
+            yarn electron-builder --macos --${{ matrix.arch }}
+          elif [ ${{ matrix.os }} = 'ubuntu-latest' ]; then
+            yarn electron-builder --linux --${{ matrix.arch }}
+          elif [ ${{ matrix.os }} = 'windows-latest' ]; then
+            yarn electron-builder --windows --${{ matrix.arch }}
+          fi
+        env:
+          CI: true
+
+      - name: Upload Artifacts for ${{ matrix.os }} ${{ matrix.arch }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: gamepad-io-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            dist/**/*${{ matrix.os }}-${{ matrix.arch }}.*
