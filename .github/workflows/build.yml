@@ -50,11 +50,11 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ matrix.arch }}
           path: |
-            dist/gamepad-io-${{ matrix.arch }}.dmg
-            dist/gamepad-io Setup v${{ env.VERSION }}.exe
-            dist/gamepad-io-${{ matrix.arch }}.AppImage
-            dist/gamepad-io-${{ matrix.arch }}.deb
-            dist/gamepad-io-${{ matrix.arch }}.snap
+            dist/*.dmg
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.snap
 
   release:
     name: Create Release and Upload Assets
