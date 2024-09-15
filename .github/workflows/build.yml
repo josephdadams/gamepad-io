@@ -72,10 +72,9 @@ jobs:
         uses: actions/create-release@v1
         with:
           tag_name: v${{ env.VERSION }}
-          release_name: Release v${{ env.VERSION }}
+          release_name: v${{ env.VERSION }}
           draft: true
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Remove existing assets from release
         id: remove_assets
