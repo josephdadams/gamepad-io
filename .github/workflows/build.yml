@@ -1,48 +1,109 @@
 name: Build
 
 on:
-    push:
-        branches:
-            - main
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-    build:
-        name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [windows-latest, macos-latest, ubuntu-latest]
-                arch: [x64, arm64]
+  build:
+    name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        arch: [x64, arm64]
 
-        steps:
-            - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: '18'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-            - name: Install dependencies
-              run: yarn install
+      - name: Install dependencies
+        run: yarn install
 
-            - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
-              run: |
-                if ($env:RUNNER_OS -eq 'MacOS') {
-                  yarn electron-builder --macos --${{ matrix.arch }}
-                } elseif ($env:RUNNER_OS -eq 'Linux') {
-                  yarn electron-builder --linux --${{ matrix.arch }}
-                } elseif ($env:RUNNER_OS -eq 'Windows') {
-                  yarn electron-builder --windows --${{ matrix.arch }}
-                }
-              shell: pwsh
-              env:
-                  CI: true
-                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Extract version from package.json
+        id: extract_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-            - name: Upload Artifacts for ${{ matrix.os }} ${{ matrix.arch }}
-              uses: actions/upload-artifact@v3
-              with:
-                  name: gamepad-io-${{ matrix.os }}-${{ matrix.arch }}
-                  path: |
-                      dist/**/*
+      - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
+        run: |
+          if [ $RUNNER_OS = 'MacOS' ]; then
+            yarn electron-builder --macos --${{ matrix.arch }}
+          elif [ $RUNNER_OS = 'Linux' ]; then
+            yarn electron-builder --linux --${{ matrix.arch }}
+          elif [ $RUNNER_OS = 'Windows' ]; then
+            yarn electron-builder --windows --${{ matrix.arch }}
+          fi
+        shell: bash
+        env:
+          CI: true
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Release v${{ env.VERSION }}
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Remove existing assets from release
+        id: remove_assets
+        run: |
+          release_id=$(gh release view v${{ env.VERSION }} --json id -q ".id")
+          if [ -n "$release_id" ]; then
+            gh release delete-assets "$release_id" --confirm
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload macOS Asset
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.dmg
+          asset_name: gamepad-io-${{ matrix.arch }}.dmg
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Asset
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gamepad-io Setup v${{ env.VERSION }}.exe
+          asset_name: gamepad-io Setup v${{ env.VERSION }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux Assets
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.AppImage
+          asset_name: gamepad-io-${{ matrix.arch }}.AppImage
+          asset_content_type: application/octet-stream
+
+      - name: Upload Debian Package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.deb
+          asset_name: gamepad-io-${{ matrix.arch }}.deb
+          asset_content_type: application/octet-stream
+
+      - name: Upload Snap Package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.snap
+          asset_name: gamepad-io-${{ matrix.arch }}.snap
+          asset_content_type: application/octet-stream
