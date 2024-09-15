@@ -120,7 +120,7 @@ function createWindow() {
     global.win.loadFile('index.html')
 
     global.win.once('ready-to-show', () => {
-        //global.win.show();
+        showWindow()
     })
 
     global.win.webContents.on('did-finish-load', () => {
