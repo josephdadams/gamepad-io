@@ -37,6 +37,7 @@ jobs:
           fi
         env:
           CI: true
+		  GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload Artifacts for ${{ matrix.os }} ${{ matrix.arch }}
         uses: actions/upload-artifact@v3
