@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <title>gamepad-io</title>
-        <link rel="stylesheet" href="index.css" />
+        <link rel="stylesheet" href="public/index.css" />
         <script>
             const ipc = require('electron').ipcRenderer
             //const remote = require('electron').remote;
@@ -34,7 +34,7 @@
 
                 return x('#app')(
                     gamepads.length < 1
-                        ? 'Press a button on your controller to get started. All connected gamepads will be detected.'
+                        ? 'Press a button on any connected controller to get started. All connected gamepads will be detected.'
                         : gamepads.map((gamepad, idx) =>
                               x('.gamepad')(
                                   title(`${idx + 1}: ${gamepad.id}`),
@@ -143,7 +143,8 @@
     </head>
     <body>
         <div id="logo">
-            <img src="static/icon.png" />
+			gamepad-io
+            <img src="public/icon.png" />
         </div>
         <div id="app"></div>
         <script src="index.js"></script>

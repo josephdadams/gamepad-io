@@ -31,6 +31,7 @@
         "style.css": "^1.0.3"
     },
     "devDependencies": {
+        "browserify": "^17.0.0",
         "electron": "^31.3.1",
         "electron-builder": "^24.13.3",
         "np": "^7.5.0",

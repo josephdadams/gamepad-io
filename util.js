@@ -43,7 +43,7 @@ function startSocketIO() {
     port = config.get('apiPort')
 
     server.use(express.json()) //parse json in body
-    server.use(express.static(path.join(__dirname, 'static')))
+    server.use(express.static(path.join(__dirname, 'public')))
 
     server.get('/', function (req, res) {
         res.sendFile('controllers.html', { root: __dirname })
@@ -86,6 +86,14 @@ function startSocketIO() {
                 )
             }
         })
+
+		socket.on('join_controllers_web', function () {
+			socket.join('controllers_web')
+			//send controllers to this client by looping through the global.CONTROLLERS
+			for (let i = 0; i < global.CONTROLLERS.length; i++) {
+				socket.emit('gamepad_connected', global.CONTROLLERS[i]);
+			}
+		})
     })
 
     try {
@@ -113,6 +121,7 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false,
             enableRemoteModule: true,
+			backgroundThrottling: false,
         },
         icon: config.get('icon'),
     })
@@ -120,11 +129,10 @@ function createWindow() {
     global.win.loadFile('index.html')
 
     global.win.once('ready-to-show', () => {
-        showWindow()
+        //showWindow()
     })
 
     global.win.webContents.on('did-finish-load', () => {
-        //global.win.show();
         if (global.CONTROLLERS.length < 1) {
             //show notification that they need to first press a button on a gamepad
             showNotification({
@@ -134,13 +142,28 @@ function createWindow() {
             })
         }
 
+		if (config.get('showControlsOnStartup')) {
+			//wait a second before showing the window
+			setTimeout(() => {
+				global.win.show()
+				buildContextMenu()
+			}, 2000)
+		}
+
         //show dev tools
         //global.win.webContents.openDevTools();
     })
 
     global.win.on('close', (event) => {
         event.preventDefault()
+
+		if (config.get('preventControlsFromHiding')) {
+			// Prevent the window from closing
+			return
+		}
+
         global.win.hide()
+		buildContextMenu()
     })
 
     app.on('before-quit', function (evt) {
@@ -231,6 +254,9 @@ function loadIPCEvents() {
 
             global.CONTROLLERS.push(gamepadObj)
 
+			//emit to controllers page
+			io.to('controllers_web').emit('gamepad_connected', gamepadObj);
+
             //rebuild context menu
             buildContextMenu()
 
@@ -251,6 +277,9 @@ function loadIPCEvents() {
         global.CONTROLLERS = global.CONTROLLERS.filter((device) => {
             return device.index != index
         })
+
+		//emit to controllers page
+		io.to('controllers_web').emit('gamepad_disconnected', index);
 
         //rebuild context menu
         buildContextMenu()
@@ -402,12 +431,17 @@ function sendButtonEvent(uuid, buttonIndex, pressed, touched, val, pct) {
         pct
     )
     //io.sockets.emit('button_event', uuid, buttonIndex, pressed, touched, val, pct);
+
+	let controllerObj = getControllerByUUID(uuid);
+	io.to('controllers_web').emit('gamepad_data', controllerObj);
 }
 
 function sendAxisEvent(uuid, idx, pressedBool, axis) {
     //only emit to this controller's room (by uuid)
     io.to(uuid).emit('axis_event', uuid, idx, pressedBool, axis)
-    //io.sockets.emit('axis_event', uuid, idx, pressedBool, axis);
+    
+	let controllerObj = getControllerByUUID(uuid);
+	io.to('controllers_web').emit('gamepad_data', controllerObj);
 }
 
 function getControllerByIndex(idx) {
@@ -466,6 +500,10 @@ function buildContextMenu() {
         })
     }
 
+	menuArr.push({
+        type: 'separator',
+    })
+
     let verb = global.win.isVisible() ? 'Hide' : 'Show'
 
     menuArr.push({
@@ -473,6 +511,24 @@ function buildContextMenu() {
         type: 'normal',
         click: function () {
             showWindow()
+        },
+    })
+
+	menuArr.push({
+        label: 'Show Controls On Startup',
+        type: 'checkbox',
+        checked: config.get('showControlsOnStartup'),
+        click: function () {
+            config.set('showControlsOnStartup', !config.get('showControlsOnStartup'))
+        },
+    })
+
+	menuArr.push({
+        label: 'Prevent Controls From Hiding',
+        type: 'checkbox',
+        checked: config.get('preventControlsFromHiding'),
+        click: function () {
+            config.set('preventControlsFromHiding', !config.get('preventControlsFromHiding'))
         },
     })
 
@@ -515,7 +571,10 @@ function buildContextMenu() {
 
 function showWindow() {
     if (global.win.isVisible()) {
-        global.win.hide()
+		//check if prevent is on or off
+		if (config.get('preventControlsFromHiding') == false) {
+			global.win.hide()
+		}        
     } else {
         global.win.show()
     }
