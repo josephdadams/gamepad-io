@@ -166,6 +166,12 @@ function createWindow() {
 		buildContextMenu()
     })
 
+	global.win.on('blur', () => {
+		if (config.get('preventControlsFromHiding')) {
+			global.win.showInactive()
+		}
+	})
+
     app.on('before-quit', function (evt) {
         //close the window
         global.win.destroy()
@@ -512,6 +518,7 @@ function buildContextMenu() {
         click: function () {
             showWindow()
         },
+		enabled: config.get('preventControlsFromHiding') ? false : true,
     })
 
 	menuArr.push({
@@ -529,6 +536,11 @@ function buildContextMenu() {
         checked: config.get('preventControlsFromHiding'),
         click: function () {
             config.set('preventControlsFromHiding', !config.get('preventControlsFromHiding'))
+			buildContextMenu()
+			//if window is hidden, show it, if prevent is true
+			if (config.get('preventControlsFromHiding')) {
+				global.win.show()
+			}
         },
     })
 
