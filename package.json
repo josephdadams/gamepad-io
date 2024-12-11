@@ -17,7 +17,9 @@
         "test": "yarn run lint",
         "start": "electron .",
         "pack": "electron-builder --dir",
-        "dist": "electron-builder --macos --linux --arm64 --x64 --windows",
+        "dist": "electron-builder --mac --linux --arm64 --x64 --win",
+		"dist-mac": "electron-builder --mac --arm64 --x64",
+		"dist-win": "electron-builder --win --arm64 --x64",
         "dist-linux": "electron-builder --linux --arm64 --x64",
         "release": "np"
     },
@@ -34,15 +36,13 @@
         "browserify": "^17.0.0",
         "electron": "^31.3.1",
         "electron-builder": "^24.13.3",
+        "electron-notarize": "^2.0.0",
         "np": "^7.5.0",
         "prettier": "^3.3.3",
         "xo": "^0.39.1"
     },
     "xo": {
-        "envs": [
-            "node",
-            "browser"
-        ]
+        "envs": ["node", "browser"]
     },
     "np": {
         "publish": false,
@@ -50,9 +50,16 @@
     },
     "build": {
         "appId": "com.josephadams.gamepad-io",
+        "productName": "gamepad-io",
         "mac": {
             "category": "public.app-category.productivity",
-            "darkModeSupport": true
+            "darkModeSupport": true,
+            "target": ["dmg", "zip"],
+            "hardenedRuntime": true,
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist",
+            "gatekeeperAssess": false,
+            "identity": "Developer ID Application: Your Name (TEAM_ID)"
         },
         "dmg": {
             "iconSize": 160,
@@ -70,12 +77,25 @@
             ]
         },
         "linux": {
-            "target": [
-                "AppImage",
-                "deb",
-                "rpm"
-            ],
+            "target": ["AppImage", "deb", "rpm"],
             "category": "Utility"
-        }
+        },
+        "win": {
+            "target": ["nsis", "zip"],
+            "publisherName": "Joseph Adams"
+        },
+        "files": [
+            "dist/**/*",
+            "node_modules/**/*",
+            "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "assets/",
+                "to": "assets/",
+                "filter": ["**/*"]
+            }
+        ],
+        "afterSign": "electron-builder-notarize"
     }
 }

@@ -26,14 +26,28 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Setup macOS signing (only on macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > macos_cert.p12
+          security import macos_cert.p12 -k build.keychain -P ${{ secrets.MACOS_CERTIFICATE_PASSWORD }} -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          rm macos_cert.p12
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+
       - name: Extract version from package.json
         id: extract_version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
 
       - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
         run: |
-          if [ $RUNNER_OS = 'MacOS' ]; then
-            yarn electron-builder --macos --${{ matrix.arch }}
+          if [ $RUNNER_OS = 'macOS' ]; then
+            yarn electron-builder --mac --${{ matrix.arch }} --publish never
           elif [ $RUNNER_OS = 'Linux' ]; then
             yarn electron-builder --linux --${{ matrix.arch }}
           elif [ $RUNNER_OS = 'Windows' ]; then
@@ -43,6 +57,10 @@ jobs:
         env:
           CI: true
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
 
       - name: Upload Artifacts
         if: ${{ always() }}
@@ -65,7 +83,7 @@ jobs:
 
       - name: Extract version from package.json
         id: extract_version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         id: create_release
@@ -76,20 +94,6 @@ jobs:
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Remove existing assets from release
-        id: remove_assets
-        run: |
-          release_id=$(gh release view v${{ env.VERSION }} --json id -q ".id")
-          if [ -n "$release_id" ]; then
-            assets=$(gh release view v${{ env.VERSION }} --json assets -q ".assets[] | .id")
-            for asset in $assets; do
-              echo "Deleting asset $asset..."
-              gh release delete-asset $asset
-            done
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload macOS Asset
         uses: actions/upload-release-asset@v1
