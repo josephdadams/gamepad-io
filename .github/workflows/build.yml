@@ -1,136 +1,51 @@
 name: Build and Release
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+        tags:
+            - 'v*.*.*' # Trigger on version tags like v1.0.0
 
 jobs:
-  build:
-    name: Build Electron App on ${{ matrix.os }} ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        arch: [x64, arm64]
+    build_desktop:
+        name: Build Desktop on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [windows-latest, macos-latest, ubuntu-latest]
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
 
-    steps:
-      - uses: actions/checkout@v3
+            - name: Install dependencies
+              run: yarn install --production
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+            # macOS-specific steps for code signing and notarization
+            - name: Import Apple Developer Certificate (macOS only)
+              if: matrix.os == 'macos-latest'
+              env:
+                DEVELOPER_ID_CERT: ${{ secrets.DEVELOPER_ID_CERT }}
+                DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+              run: |
+                echo "$DEVELOPER_ID_CERT" | base64 --decode > developer_id_certificate.p12
+                security create-keychain -p "" build.keychain
+                security default-keychain -s build.keychain
+                security unlock-keychain -p "" build.keychain
+                security import developer_id_certificate.p12 -k build.keychain -P "$DEVELOPER_ID_CERT_PASSWORD" -T /usr/bin/codesign
+                security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
 
-      - name: Install dependencies
-        run: yarn install
+            - name: List Certificates in Keychain (macOS only)
+              if: matrix.os == 'macos-latest'
+              run: |
+                security find-identity -v -p codesigning
 
-      - name: Setup macOS signing (only on macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > macos_cert.p12
-          security import macos_cert.p12 -k build.keychain -P ${{ secrets.MACOS_CERTIFICATE_PASSWORD }} -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-          rm macos_cert.p12
-        env:
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-
-      - name: Extract version from package.json
-        id: extract_version
-        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
-
-      - name: Build Electron app for ${{ matrix.os }} ${{ matrix.arch }}
-        run: |
-          if [ $RUNNER_OS = 'macOS' ]; then
-            yarn electron-builder --mac --${{ matrix.arch }} --publish never
-          elif [ $RUNNER_OS = 'Linux' ]; then
-            yarn electron-builder --linux --${{ matrix.arch }}
-          elif [ $RUNNER_OS = 'Windows' ]; then
-            yarn electron-builder --windows --${{ matrix.arch }}
-          fi
-        shell: bash
-        env:
-          CI: true
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-
-      - name: Upload Artifacts
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ runner.os }}-${{ matrix.arch }}
-          path: |
-            dist/*.dmg
-            dist/*.exe
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.snap
-
-  release:
-    name: Create Release and Upload Assets
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Extract version from package.json
-        id: extract_version
-        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: v${{ env.VERSION }}
-          draft: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Upload macOS Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.dmg
-          asset_name: gamepad-io-${{ matrix.arch }}.dmg
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gamepad-io Setup v${{ env.VERSION }}.exe
-          asset_name: gamepad-io Setup v${{ env.VERSION }}.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload Linux Assets
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.AppImage
-          asset_name: gamepad-io-${{ matrix.arch }}.AppImage
-          asset_content_type: application/octet-stream
-
-      - name: Upload Debian Package
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.deb
-          asset_name: gamepad-io-${{ matrix.arch }}.deb
-          asset_content_type: application/octet-stream
-
-      - name: Upload Snap Package
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gamepad-io-${{ matrix.arch }}.snap
-          asset_name: gamepad-io-${{ matrix.arch }}.snap
-          asset_content_type: application/octet-stream
+            - name: Build and Release
+              uses: samuelmeuli/action-electron-builder@v1.6.0
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  release: true
+              env:
+                APPLE_ID: ${{ secrets.APPLE_ID }}
+                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
