@@ -1,13 +1,13 @@
 {
     "name": "gamepad-io",
     "productName": "gamepad-io",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Use gamepads to control your computer",
     "license": "MIT",
     "repository": "josephdadams/gamepad-io",
     "author": {
         "name": "Joseph Adams",
-        "email": "josephdadams@gmail.com",
+        "email": "joseph@josephadams.dev",
         "url": "https://josephadams.dev"
     },
     "scripts": {
@@ -41,61 +41,47 @@
         "prettier": "^3.3.3",
         "xo": "^0.39.1"
     },
-    "xo": {
-        "envs": ["node", "browser"]
-    },
-    "np": {
-        "publish": false,
-        "releaseDraft": false
-    },
     "build": {
         "appId": "com.josephadams.gamepad-io",
         "productName": "gamepad-io",
-        "mac": {
-            "category": "public.app-category.productivity",
-            "darkModeSupport": true,
-            "target": ["dmg", "zip"],
-            "hardenedRuntime": true,
-            "entitlements": "build/entitlements.mac.plist",
-            "entitlementsInherit": "build/entitlements.mac.plist",
-            "gatekeeperAssess": false,
-            "identity": "Developer ID Application: Your Name (TEAM_ID)"
-        },
-        "dmg": {
-            "iconSize": 160,
-            "contents": [
-                {
-                    "x": 180,
-                    "y": 170
-                },
-                {
-                    "x": 480,
-                    "y": 170,
-                    "type": "link",
-                    "path": "/Applications"
-                }
-            ]
-        },
-        "linux": {
-            "target": ["AppImage", "deb", "rpm"],
-            "category": "Utility"
-        },
-        "win": {
-            "target": ["nsis", "zip"],
-            "publisherName": "Joseph Adams"
-        },
         "files": [
             "dist/**/*",
-            "node_modules/**/*",
-            "package.json"
+            "public/**/*",
+            "assets/**/*"
         ],
-        "extraResources": [
-            {
-                "from": "assets/",
-                "to": "assets/",
-                "filter": ["**/*"]
-            }
-        ],
-        "afterSign": "electron-builder-notarize"
+        "mac": {
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ],
+            "category": "public.app-category.utilities",
+            "icon": "build/icon.png",
+			"identity": "Joseph Adams (R2PY2DC3A4)",
+            "extendInfo": {
+                "NSApplicationSupportsSecureRestorableState": true,
+				"electronTeamId": "R2PY2DC3A4"
+            },
+			"notarize": {
+				"teamId": "R2PY2DC3A4"
+			},
+            "hardenedRuntime": true,
+            "gatekeeperAssess": true,
+            "entitlements": "entitlements.mac.plist",
+            "entitlementsInherit": "entitlements.mac.plist"
+        },
+        "win": {
+            "target": "nsis",
+            "icon": "assets/tray-icon.png"
+        },
+        "linux": {
+            "target": "AppImage",
+            "icon": "assets/tray-icon.png"
+        },
+        "generateUpdatesFilesForAllChannels": false
     }
 }
