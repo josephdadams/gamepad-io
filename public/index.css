@@ -1,8 +1,11 @@
 html {
-    background: #003e74;
+    background: #01182d;
     color: white;
     font-size: 16px;
     font-family: Arial, sans-serif;
+}
+body {
+	overflow: auto;
 }
 * {
     cursor: default;
@@ -76,4 +79,15 @@ html {
 }
 .title {
     font-size: 18px;
+}
+#logo {
+	background-image: url('public/icon.png');
+    background-size: cover; /* Scale the image to cover the entire div */
+    background-repeat: no-repeat; /* Prevent the image from repeating */
+    background-position: center; /* Center the image within the div */
+}
+#app {
+	display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
 }
