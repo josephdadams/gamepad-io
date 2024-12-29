@@ -1,54 +1,18 @@
 {
     "name": "gamepad-io",
-    "productName": "gamepad-io",
     "version": "1.0.0",
+    "author": "Joseph Adams <joseph@josephadams.dev>",
     "description": "Use gamepads to control your computer",
-    "license": "MIT",
-    "repository": "josephdadams/gamepad-io",
-    "author": {
-        "name": "Joseph Adams",
-        "email": "joseph@josephadams.dev",
-        "url": "https://josephadams.dev"
-    },
+    "main": "index.js",
     "scripts": {
-        "postinstall": "electron-builder install-app-deps",
-        "format": "prettier -w .",
-        "lint": "xo",
-        "test": "yarn run lint",
         "start": "electron .",
-        "pack": "electron-builder --dir",
-        "dist": "electron-builder --mac --linux --arm64 --x64 --win",
-		"dist-mac": "electron-builder --mac --arm64 --x64",
-		"dist-win": "electron-builder --win --arm64 --x64",
-        "dist-linux": "electron-builder --linux --arm64 --x64",
-        "release": "np"
-    },
-    "dependencies": {
-        "electron-store": "^8.0.0",
-        "express": "^4.19.2",
-        "hyperaxe": "^2.0.1",
-        "nanochoo": "^6.13.0",
-        "short-uuid": "^5.2.0",
-        "socket.io": "^4.7.5",
-        "style.css": "^1.0.3"
-    },
-    "devDependencies": {
-        "browserify": "^17.0.0",
-        "electron": "^31.3.1",
-        "electron-builder": "^24.13.3",
-        "electron-notarize": "^2.0.0",
-        "np": "^7.5.0",
-        "prettier": "^3.3.3",
-        "xo": "^0.39.1"
+        "format": "prettier -w .",
+        "lint:raw": "eslint --ext .ts --ext .js --ignore-pattern dist --ignore-pattern pkg",
+        "lint": "yarn lint:raw ."
     },
     "build": {
         "appId": "com.josephadams.gamepad-io",
         "productName": "gamepad-io",
-        "files": [
-            "dist/**/*",
-            "public/**/*",
-            "assets/**/*"
-        ],
         "mac": {
             "target": [
                 {
@@ -61,14 +25,11 @@
             ],
             "category": "public.app-category.utilities",
             "icon": "build/icon.png",
-			"identity": "Joseph Adams (R2PY2DC3A4)",
+            "identity": "Joseph Adams (R2PY2DC3A4)",
             "extendInfo": {
                 "NSApplicationSupportsSecureRestorableState": true,
-				"electronTeamId": "R2PY2DC3A4"
+                "electronTeamId": "R2PY2DC3A4"
             },
-			"notarize": {
-				"teamId": "R2PY2DC3A4"
-			},
             "hardenedRuntime": true,
             "gatekeeperAssess": true,
             "entitlements": "entitlements.mac.plist",
@@ -76,12 +37,29 @@
         },
         "win": {
             "target": "nsis",
-            "icon": "assets/tray-icon.png"
+            "icon": "assets/tray-icon.ico"
         },
         "linux": {
             "target": "AppImage",
             "icon": "assets/tray-icon.png"
         },
         "generateUpdatesFilesForAllChannels": false
+    },
+    "dependencies": {
+		"electron-store": "^8.0.0",
+        "express": "^4.19.2",
+        "hyperaxe": "^2.0.1",
+        "nanochoo": "^6.13.0",
+        "short-uuid": "^5.2.0",
+        "socket.io": "^4.7.5",
+        "style.css": "^1.0.3"
+    },
+    "devDependencies": {
+		"browserify": "^17.0.0",
+        "@electron/notarize": "^2.5.0",
+        "concurrently": "^8.0.0",
+        "electron": "^33.2.1",
+        "electron-builder": "^25.1.8",
+        "prettier": "^3.3.3"
     }
 }
