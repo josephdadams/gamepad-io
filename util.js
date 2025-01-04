@@ -94,6 +94,11 @@ function startSocketIO() {
                 socket.emit('gamepad_connected', global.CONTROLLERS[i])
             }
         })
+
+        socket.on('relaunch', function () {
+            app.relaunch()
+            app.exit()
+        })
     })
 
     try {

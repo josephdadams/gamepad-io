@@ -63,6 +63,10 @@ gamepad-io has a socket.io API. It runs on Port `8809`.
         -   `leftTrigger`: (relevant to "trigger-rumble" effects only) Optional. The rumble intensity of the bottom-left front trigger, normalized to the range between 0.0 and 1.0. Defaults to 0.0.
         -   `rightTrigger`: (relevant to "trigger-rumble" effects only) Optional. The rumble intensity of the bottom-right front trigger, normalized to the range between 0.0 and 1.0. Defaults to 0.0.
 
+-   `relaunch`:
+
+    Used to relaunch the app, if needed. The app will close and re-open.
+
 **The following events will be emitted to the clients:**
 _Only emitted to the socket.io room with the name of the uuid of the controller, so your client must use `join_room` first to receive the events._
 
