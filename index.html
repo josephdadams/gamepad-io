@@ -26,6 +26,12 @@
                     const myGamepad = gamepads[controllerIndex]
                     myGamepad.vibrationActuator.playEffect(type, params)
                 })
+
+                ipc.on('setWallpaper', (event, base64Image) => {
+                   document.body.style.backgroundImage = `url('${base64Image}')`
+                    document.body.style.backgroundSize = 'cover'
+                    document.body.style.backgroundPosition = 'center'
+                })
             }
 
             function view(state, emit) {
@@ -142,8 +148,6 @@
         </script>
     </head>
     <body>
-        <div id="logo"></div>
         <div id="app"></div>
-        <script src="index.js"></script>
     </body>
 </html>

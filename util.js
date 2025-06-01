@@ -7,6 +7,7 @@ const {
     shell,
     ipcMain,
     BrowserWindow,
+    dialog,
 } = require('electron')
 
 const config = require('./config.js')
@@ -19,6 +20,8 @@ const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
 const short = require('short-uuid')
+
+const fs = require('fs')
 
 var server = null
 var httpServer = null
@@ -155,8 +158,13 @@ function createWindow() {
             }, 2000)
         }
 
+        const savedWallpaper = config.get('wallpaper')
+        if (savedWallpaper) {
+           global.win.webContents.send('setWallpaper', savedWallpaper)
+        }
+
         //show dev tools
-        //global.win.webContents.openDevTools();
+        global.win.webContents.openDevTools()
     })
 
     global.win.on('close', (event) => {
@@ -510,6 +518,38 @@ function buildContextMenu() {
             enabled: false,
         })
     }
+
+    menuArr.push({
+        type: 'separator',
+    })
+
+    menuArr.push({
+        label: 'Set Wallpaper/Logo',
+        click: async () => {
+            const { canceled, filePaths } = await dialog.showOpenDialog({
+                properties: ['openFile'],
+                filters: [
+                    {
+                        name: 'Images',
+                        extensions: ['jpg', 'png', 'jpeg', 'bmp', 'gif'],
+                    },
+                ],
+            })
+
+            if (!canceled && filePaths.length > 0) {
+                const filePath = filePaths[0]
+                const imageBuffer = fs.readFileSync(filePath)
+                const ext = path.extname(filePath).slice(1) // Get 'png', 'jpg', etc.
+                const base64Data = `data:image/${ext};base64,${imageBuffer.toString('base64')}`
+
+                // Save to store
+                config.set('wallpaper', base64Data)
+
+                // Send to renderer
+                global.win.webContents.send('setWallpaper', base64Data)
+            }
+        },
+    })
 
     menuArr.push({
         type: 'separator',

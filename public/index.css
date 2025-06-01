@@ -6,6 +6,14 @@ html {
 }
 body {
     overflow: auto;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: black; /* Fallback */
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
 }
 * {
     cursor: default;
@@ -81,7 +89,7 @@ body {
     font-size: 18px;
 }
 #logo {
-    background-image: url('public/icon.png');
+    background-image: url('./icon.png');
     background-size: cover; /* Scale the image to cover the entire div */
     background-repeat: no-repeat; /* Prevent the image from repeating */
     background-position: center; /* Center the image within the div */
