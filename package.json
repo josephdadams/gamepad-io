@@ -31,8 +31,7 @@
             "hardenedRuntime": true,
             "gatekeeperAssess": true,
             "entitlements": "entitlements.mac.plist",
-            "entitlementsInherit": "entitlements.mac.plist",
-            "sandbox": false
+            "entitlementsInherit": "entitlements.mac.plist"
         },
         "win": {
             "target": "nsis",
