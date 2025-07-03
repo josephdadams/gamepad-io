@@ -164,7 +164,7 @@ function createWindow() {
         }
 
         //show dev tools
-        global.win.webContents.openDevTools()
+        //global.win.webContents.openDevTools()
     })
 
     global.win.on('close', (event) => {
@@ -610,13 +610,6 @@ function buildContextMenu() {
 
     menuArr.push({
         type: 'separator',
-    })
-
-    menuArr.push({
-        label: 'Request Help/Support',
-        click: function () {
-            shell.openExternal(config.get('supportUrl'))
-        },
     })
 
     menuArr.push({
