@@ -43,7 +43,7 @@ function startSocketIO() {
     server = express()
     httpServer = new http.Server(server)
     io = new socketio.Server(httpServer, { allowEIO3: true })
-    port = config.get('apiPort')
+    const port = config.get('apiPort')
 
     server.use(express.json()) //parse json in body
     server.use(express.static(path.join(__dirname, 'public')))
@@ -128,7 +128,6 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            enableRemoteModule: true,
             backgroundThrottling: false,
         },
         icon: config.get('icon'),

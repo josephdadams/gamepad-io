@@ -10,6 +10,7 @@ const {
 const config = require('./config.js')
 const package_json = require('./package.json')
 const util = require('./util.js')
+const menu = require('./menu.js')
 
 const VERSION = package_json.version
 
@@ -41,6 +42,8 @@ app.on('window-all-closed', () => {
 app.on('activate', async () => {})
 ;(async () => {
     await app.whenReady()
+
+    Menu.setApplicationMenu(menu)
 
     const icon = nativeImage.createFromDataURL(config.get('icon'))
     global.tray = new Tray(icon.resize({ width: 24, height: 24 }))

@@ -124,18 +124,14 @@
                         socket.emit('join_controllers_web')
                     })
 
-                    // Set up socket event listener for 'gamepad_connected'
                     socket.on('gamepad_connected', (data) => {
-                        console.log('Gamepad connected:', data) // Replace with your desired logic
-                        // Example: Add gamepad data to state
+                        console.log('Gamepad connected:', data)
                         state.controllers[data.index] = data
                         emitter.emit('render')
                     })
 
-                    // Set up socket event listener for 'gamepad_disconnected'
                     socket.on('gamepad_disconnected', (data) => {
-                        console.log('Gamepad disconnected:', data) // Replace with your desired logic
-                        // Example: Remove gamepad data from state
+                        console.log('Gamepad disconnected:', data)
                         delete state.controllers[data.index]
                         emitter.emit('render')
                     })
