@@ -27,7 +27,7 @@ if (process.platform == 'darwin') {
 
 // Prevent multiple instances of the app
 if (!app.requestSingleInstanceLock()) {
-    app.quit()
+    app.exit(0)
 }
 
 app.on('second-instance', () => {})

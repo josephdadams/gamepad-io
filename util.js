@@ -104,18 +104,18 @@ function startSocketIO() {
         })
     })
 
-    try {
-        httpServer.listen(port)
-        console.log('REST/Socket.io API server started on: ' + port)
-    } catch (error) {
-        if (error.toString().indexOf('EADDRINUSE') > -1) {
+    httpServer.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
             showNotification({
                 title: 'Error',
                 body: 'Unable to start server. Is gamepad-io already running?',
                 showNotification: true,
             })
         }
-    }
+    })
+
+    httpServer.listen(port)
+    console.log('REST/Socket.io API server started on: ' + port)
 }
 
 function createWindow() {

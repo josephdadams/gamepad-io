@@ -139,10 +139,12 @@
                     })
 
                     emitter.emit('render')
-                    window.requestAnimationFrame(scanGamepads)
                 }
 
-                scanGamepads()
+                // Use a fixed-interval timer instead of requestAnimationFrame:
+                // rAF is suspended by Chromium when the window is minimized,
+                // which caused missed/delayed input while backgrounded.
+                setInterval(scanGamepads, 16)
                 loadIPCs()
             }
         </script>
