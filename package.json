@@ -62,6 +62,9 @@
         },
         "generateUpdatesFilesForAllChannels": false
     },
+    "resolutions": {
+        "tar": "^7.5.20"
+    },
     "dependencies": {
         "electron-store": "^8.0.0",
         "electron-util": "0.17.2",
